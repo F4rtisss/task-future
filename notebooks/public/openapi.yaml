@@ -1,0 +1,245 @@
+openapi: 3.0.3
+info:
+  title: 'Swagger NoteBooks - OpenAPI 1.0'
+  description: 'API для работы с записями в книжке'
+  termsOfService: 'http://swagger.io/terms/'
+  contact:
+    email: 'cerabimere@gmail.com'
+  version: 1.0.0
+servers:
+  - url: 'http://localhost'
+paths:
+  /api/v1/notebook:
+    get:
+      tags:
+        - notebooks
+      summary: Получить записи из книжки с пагинацией
+      description: Выполняет запрос к базе данных для получения списка блокнотов
+      operationId: list
+      parameters:
+        - name: take
+          in: query
+          description: Кол-во записей, которое берём
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          description: Кол-во записей необходимое пропустить
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notebook'
+        '400':
+          description: Некорректный запрос
+
+    post:
+      tags:
+        - notebooks
+      summary: Создать запись в книжке
+      description: Создаёт новую запись в книжке
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNotebookRequest'
+      responses:
+        '200':
+          description: Успешное создание
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notebook'
+        '400':
+          description: Некорректный запрос
+
+  /api/v1/notebook/{id}:
+    get:
+      tags:
+        - notebooks
+      summary: Получить запись по ID
+      description: Получить запись из книжки по её ID
+      operationId: getById
+      parameters:
+        - name: id
+          in: path
+          description: ID записи
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notebook'
+        '404':
+          description: Запись не найдена
+
+    post:
+      tags:
+        - notebooks
+      summary: Обновить запись по ID
+      description: Обновляет существующую запись в книжке по её ID
+      operationId: update
+      parameters:
+        - name: id
+          in: path
+          description: ID записи
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNotebookRequest'
+      responses:
+        '200':
+          description: Успех
+        '404':
+          description: Запись не найдена
+        '400':
+          description: Некорректный запрос
+
+    delete:
+      tags:
+        - notebooks
+      summary: Удалить запись по ID
+      description: Удаляет запись из книжки по её ID
+      operationId: destroy
+      parameters:
+        - name: id
+          in: path
+          description: ID записи
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                    description: Результат удаления
+        '404':
+          description: Запись не найдена
+
+  /api/v1/storage/upload:
+    post:
+      tags:
+        - storage
+      summary: Загрузить фотографию с проверкой
+      description: Загружает фотографию на сервер
+      operationId: uploadPhoto
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photo:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Успешно загружено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  photo_id:
+                    type: integer
+                    example: 1
+        '500':
+          description: Внутренняя ошибка сервера
+
+components:
+  schemas:
+    Notebook:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+        fio:
+          type: string
+          example: "Фамилия Имя Отчество"
+        company:
+          type: string
+          format: string 
+          nullable: true
+          example: "future"
+        phone:
+          type: string
+          example: "79999991212"
+        email:
+          type: string
+          example: "xxx@mail.ru"
+        data_birth:
+          type: string 
+          format: date 
+          nullable: true
+          example: "08.04.2024"
+        photo:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/Photo'
+            
+    Photo:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        url:
+          type: string
+          format: uri
+          example: "http://localhost/storage/photos/chAFEQdX2IweV7jLRlcZhQ2c6SJKJoEz4vCyYxK3.jpg"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-04-09T12:50:57.000000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-04-09T12:50:57.000000Z"
+      
+    CreateNotebookRequest:
+      type: object
+      properties:
+        fio:
+          type: string
+          example: "Дёмин Бла бла"
+        phone:
+          type: string
+          example: "79999991212"
+        email:
+          type: string
+          example: "xxx@mail.ru"
+      required:
+        - fio
+        - phone
+        - email

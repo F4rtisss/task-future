@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  nginx:
+    image: nginx:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./notebooks/:/var/www/notebooks.com/
+    depends_on:
+      - app
+
+  db:
+    image: mariadb:latest
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: example
+
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+
+  app:
+    container_name: notebooks-app
+    build: ./notebooks
+    restart: unless-stopped
+    volumes:
+      - ./notebooks/:/var/www/notebooks.com/
+    depends_on:
+      - db
